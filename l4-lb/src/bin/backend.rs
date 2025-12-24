@@ -10,16 +10,32 @@ async fn main() -> std::io::Result<()> {
     println!("Backend listening on {}", addr);
 
     loop {
-        let (mut socket, _) = listener.accept().await?;
+        let (mut socket, peer) = listener.accept().await?;
+        println!("Accepted connection from {}", peer);
 
         tokio::spawn(async move {
             let mut buf = [0u8; 1024];
+
+            let n = match socket.read(&mut buf).await {
+                Ok(0) => return,
+                Ok(n) => n,
+                Err(_) => return,
+            };
+
+            if buf[..n] == *b"HEALTH\n".as_slice() {
+                let _ = socket.write_all(b"OK\n").await;
+                return;
+            }
+
+            let _ = socket.write_all(&buf[..n]).await;
+
             loop {
                 let n = match socket.read(&mut buf).await {
                     Ok(0) => return,
                     Ok(n) => n,
                     Err(_) => return,
                 };
+
                 if socket.write_all(&buf[..n]).await.is_err() {
                     return;
                 }

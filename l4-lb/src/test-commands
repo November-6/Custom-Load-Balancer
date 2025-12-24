@@ -1,0 +1,26 @@
+cargo run --bin backend
+
+
+
+# simulating 3 servers
+
+>> target\debug\backend.exe 9000
+>> target\debug\backend.exe 9001
+>> target\debug\backend.exe 9002
+>> cargo run --bin lb
+
+# to add a server I can just add another backend to lb.rs
+
+
+# this powershell script will send messages to the backend THROUGH the load balancer, idk how to write powershell scripts so had to AI this thingy
+
+for ($i=0; $i -lt 40; $i++) {
+  $c = New-Object System.Net.Sockets.TcpClient("localhost",8080)
+  $s = $c.GetStream()
+  $w = New-Object System.IO.StreamWriter($s)
+  $r = New-Object System.IO.StreamReader($s)
+  $w.WriteLine("msg $i")
+  $w.Flush()
+  $r.ReadLine()
+  $c.Close()
+}
